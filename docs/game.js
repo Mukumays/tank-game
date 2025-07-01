@@ -308,6 +308,34 @@ window.addEventListener('keyup', e => {
     if (key === "arrowdown" || key === "s") keys.down = false;
 });
 
+function setupTouchControls() {
+    const btnUp = document.getElementById('btn-up');
+    const btnDown = document.getElementById('btn-down');
+    const btnLeft = document.getElementById('btn-left');
+    const btnRight = document.getElementById('btn-right');
+    const btnFire = document.getElementById('btn-fire');
+    if (!btnUp) return; // если кнопок нет, ничего не делаем
+    btnUp.addEventListener('touchstart', e => { e.preventDefault(); keys.up = true; });
+    btnUp.addEventListener('touchend', e => { e.preventDefault(); keys.up = false; });
+    btnDown.addEventListener('touchstart', e => { e.preventDefault(); keys.down = true; });
+    btnDown.addEventListener('touchend', e => { e.preventDefault(); keys.down = false; });
+    btnLeft.addEventListener('touchstart', e => { e.preventDefault(); keys.left = true; });
+    btnLeft.addEventListener('touchend', e => { e.preventDefault(); keys.left = false; });
+    btnRight.addEventListener('touchstart', e => { e.preventDefault(); keys.right = true; });
+    btnRight.addEventListener('touchend', e => { e.preventDefault(); keys.right = false; });
+    if (btnFire) {
+        btnFire.addEventListener('touchstart', e => {
+            e.preventDefault();
+            if (player.canShoot) {
+                bullets.push(createBullet(player.x, player.y, player.dir, "player"));
+                player.canShoot = false;
+                player.shootCooldown = 10 - (player.speedBonus ? 5 : 0);
+            }
+        });
+    }
+}
+setupTouchControls();
+
 function canMoveTo(x, y, fromX = player.x, fromY = player.y) {
     if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
     if (maze[y][x] === 1) return false;
@@ -804,30 +832,10 @@ function gameLoop() {
         ctx.textAlign = 'left';
         ctx.restore();
     }
-    if (gameState === "win") {
-        ctx.fillStyle = "rgba(30,30,30,0.8)";
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 64px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("Victory!", WIDTH/2, HEIGHT/2);
-        ctx.textAlign = "left";
-        ctx.textBaseline = "alphabetic";
-    }
-    if (gameState === "lose") {
-        ctx.fillStyle = "rgba(30,30,30,0.8)";
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 64px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("Defeat!", WIDTH/2, HEIGHT/2-40);
-        ctx.font = "32px Arial";
-        ctx.fillText("Restart", WIDTH/2, HEIGHT/2+40);
-        ctx.fillText("Exit", WIDTH/2, HEIGHT/2+100);
-        ctx.textAlign = "left";
-        ctx.textBaseline = "alphabetic";
+    if (gameState === "win" || gameState === "lose") {
+        showGameOverButtons();
+    } else {
+        hideGameOverButtons();
     }
     // UI: фаза босса и неуязвимость
     if (bossInvulnerable) {
@@ -896,6 +904,38 @@ if (player.speedBonus) {
     MOVE_FRAMES = 15; // В 2 раза быстрее (если обычное значение 30)
 } else {
     MOVE_FRAMES = 30;
+}
+
+// --- Game over buttons logic ---
+function showGameOverButtons() {
+    const div = document.getElementById('game-over-buttons');
+    if (div) div.style.display = 'flex';
+}
+function hideGameOverButtons() {
+    const div = document.getElementById('game-over-buttons');
+    if (div) div.style.display = 'none';
+}
+const btnRestart = document.getElementById('btn-restart');
+const btnExit = document.getElementById('btn-exit');
+if (btnRestart) {
+    btnRestart.onclick = function() {
+        currentLevel = 0;
+        player.lives = 10;
+        startLevel();
+        gameState = "play";
+        hideGameOverButtons();
+    };
+}
+if (btnExit) {
+    btnExit.onclick = function() {
+        hideGameOverButtons();
+        ctx.clearRect(0,0,WIDTH,HEIGHT);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 48px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Thanks for playing!", WIDTH/2, HEIGHT/2);
+        ctx.textAlign = "left";
+    };
 }
 
 gameLoop(); 
