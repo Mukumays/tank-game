@@ -843,6 +843,28 @@ function gameLoop() {
         ctx.font = "bold 22px Arial";
         ctx.fillText("Boss is invulnerable while minions are alive!", 40, 100);
     }
+    if (gameState === "lose") {
+        ctx.fillStyle = "rgba(30,30,30,0.8)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 64px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Defeat!", WIDTH/2, HEIGHT/2 - 100);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+    }
+    if (gameState === "win") {
+        ctx.fillStyle = "rgba(30,30,30,0.8)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 64px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Victory!", WIDTH/2, HEIGHT/2 - 100);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+    }
     requestAnimationFrame(gameLoop);
 }
 
@@ -910,32 +932,40 @@ if (player.speedBonus) {
 function showGameOverButtons() {
     const div = document.getElementById('game-over-buttons');
     if (div) div.style.display = 'flex';
+    // Назначаем обработчики каждый раз при показе
+    const btnRestart = document.getElementById('btn-restart');
+    const btnExit = document.getElementById('btn-exit');
+    if (btnRestart) {
+        btnRestart.onclick = function() {
+            currentLevel = 0;
+            player.lives = 10;
+            boss = null;
+            bossLives = 0;
+            bossShootTimer = 0;
+            bossPhase = 1;
+            bossMinions = [];
+            bossInvulnerable = false;
+            bossSuperAttackCounter = 0;
+            startLevel();
+            gameState = "play";
+            hideGameOverButtons();
+        };
+    }
+    if (btnExit) {
+        btnExit.onclick = function() {
+            hideGameOverButtons();
+            ctx.clearRect(0,0,WIDTH,HEIGHT);
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 48px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Thanks for playing!", WIDTH/2, HEIGHT/2);
+            ctx.textAlign = "left";
+        };
+    }
 }
 function hideGameOverButtons() {
     const div = document.getElementById('game-over-buttons');
     if (div) div.style.display = 'none';
-}
-const btnRestart = document.getElementById('btn-restart');
-const btnExit = document.getElementById('btn-exit');
-if (btnRestart) {
-    btnRestart.onclick = function() {
-        currentLevel = 0;
-        player.lives = 10;
-        startLevel();
-        gameState = "play";
-        hideGameOverButtons();
-    };
-}
-if (btnExit) {
-    btnExit.onclick = function() {
-        hideGameOverButtons();
-        ctx.clearRect(0,0,WIDTH,HEIGHT);
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 48px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("Thanks for playing!", WIDTH/2, HEIGHT/2);
-        ctx.textAlign = "left";
-    };
 }
 
 gameLoop(); 
