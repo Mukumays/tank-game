@@ -287,10 +287,11 @@ startLevel();
 let keys = {left: false, right: false, up: false, down: false};
 window.addEventListener('keydown', e => {
     if (gameState !== "play") return;
-    if (e.key === "ArrowLeft") keys.left = true;
-    if (e.key === "ArrowRight") keys.right = true;
-    if (e.key === "ArrowUp") keys.up = true;
-    if (e.key === "ArrowDown") keys.down = true;
+    const key = e.key.toLowerCase();
+    if (key === "arrowleft" || key === "a") keys.left = true;
+    if (key === "arrowright" || key === "d") keys.right = true;
+    if (key === "arrowup" || key === "w") keys.up = true;
+    if (key === "arrowdown" || key === "s") keys.down = true;
     if (e.key === " ") {
         if (player.canShoot) {
             bullets.push(createBullet(player.x, player.y, player.dir, "player"));
@@ -300,10 +301,11 @@ window.addEventListener('keydown', e => {
     }
 });
 window.addEventListener('keyup', e => {
-    if (e.key === "ArrowLeft") keys.left = false;
-    if (e.key === "ArrowRight") keys.right = false;
-    if (e.key === "ArrowUp") keys.up = false;
-    if (e.key === "ArrowDown") keys.down = false;
+    const key = e.key.toLowerCase();
+    if (key === "arrowleft" || key === "a") keys.left = false;
+    if (key === "arrowright" || key === "d") keys.right = false;
+    if (key === "arrowup" || key === "w") keys.up = false;
+    if (key === "arrowdown" || key === "s") keys.down = false;
 });
 
 function canMoveTo(x, y, fromX = player.x, fromY = player.y) {
