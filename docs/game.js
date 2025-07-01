@@ -736,7 +736,7 @@ function gameLoop() {
         // Фаза босса
         ctx.fillStyle = "#fff";
         ctx.font = "22px Arial";
-        ctx.fillText("Фаза босса: " + bossPhase, 40, 70);
+        ctx.fillText("Boss phase: " + bossPhase, 40, 70);
     }
     // Миньоны босса
     for (let minion of bossMinions) {
@@ -775,30 +775,65 @@ function gameLoop() {
     }
     // UI
     ctx.fillStyle = "#fff";
-    ctx.font = "16px sans-serif";
-    ctx.fillText(`Жизни: ${player.lives}`, 10 + offsetX, 20 + offsetY);
-    ctx.fillText(`Уровень: ${currentLevel+1}`, 10 + offsetX, 40 + offsetY);
-    if (player.shield) ctx.fillText("Щит!", 10 + offsetX, 60 + offsetY);
-    if (player.speedBonus) ctx.fillText("Скорость!", 10 + offsetX, 80 + offsetY);
+    ctx.font = "22px Arial";
+    ctx.fillText("Lives: " + player.lives, 10 + offsetX, 40 + offsetY);
+    ctx.fillText("Level: " + (currentLevel+1), 10 + offsetX, 70 + offsetY);
+    if (player.shield) ctx.fillText("Shield!", 10 + offsetX, 60 + offsetY);
+    if (player.speedBonus) ctx.fillText("Speed!", 10 + offsetX, 80 + offsetY);
+    // --- Жизни в виде сердечек ---
+    drawHearts(ctx, 10 + offsetX, 30 + offsetY, Math.max(0, player.lives));
+    // Полоска здоровья босса
+    if (boss) {
+        let barWidth = 400;
+        let barHeight = 24;
+        let barX = WIDTH/2 - barWidth/2;
+        let barY = offsetY - 40;
+        ctx.save();
+        ctx.fillStyle = '#333';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        ctx.fillStyle = '#ff4d6d';
+        let percent = boss.lives / 100;
+        ctx.fillRect(barX, barY, barWidth * percent, barHeight);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText('Boss HP', barX + barWidth/2, barY + barHeight - 6);
+        ctx.textAlign = 'left';
+        ctx.restore();
+    }
     if (gameState === "win") {
         ctx.fillStyle = "rgba(30,30,30,0.8)";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
         ctx.fillStyle = "#fff";
         ctx.font = "bold 64px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("ПОБЕДА!", WIDTH/2, HEIGHT/2);
+        ctx.textBaseline = "middle";
+        ctx.fillText("Victory!", WIDTH/2, HEIGHT/2);
         ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
     }
     if (gameState === "lose") {
-        ctx.fillStyle = "#f00";
-        ctx.font = "bold 48px sans-serif";
-        ctx.fillText("Поражение!", WIDTH/2-120 + offsetX, HEIGHT/2 + offsetY);
+        ctx.fillStyle = "rgba(30,30,30,0.8)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 64px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Defeat!", WIDTH/2, HEIGHT/2-40);
+        ctx.font = "32px Arial";
+        ctx.fillText("Restart", WIDTH/2, HEIGHT/2+40);
+        ctx.fillText("Exit", WIDTH/2, HEIGHT/2+100);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
     }
     // UI: фаза босса и неуязвимость
     if (bossInvulnerable) {
         ctx.fillStyle = "#ff0";
         ctx.font = "bold 22px Arial";
-        ctx.fillText("Босс неуязвим, пока его миньоны живы!", 40, 100);
+        ctx.fillText("Boss is invulnerable while minions are alive!", 40, 100);
     }
     requestAnimationFrame(gameLoop);
 }
@@ -861,6 +896,23 @@ if (player.speedBonus) {
     MOVE_FRAMES = 15; // В 2 раза быстрее (если обычное значение 30)
 } else {
     MOVE_FRAMES = 30;
+}
+
+// --- Жизни в виде сердечек ---
+function drawHearts(ctx, x, y, count) {
+    for (let i = 0; i < count; i++) {
+        ctx.save();
+        ctx.translate(x + i*32, y);
+        ctx.scale(1.2, 1.2);
+        ctx.beginPath();
+        ctx.moveTo(8, 15);
+        ctx.bezierCurveTo(8, 12, 0, 8, 8, 4);
+        ctx.bezierCurveTo(16, 8, 8, 12, 8, 15);
+        ctx.closePath();
+        ctx.fillStyle = '#ff4d6d';
+        ctx.fill();
+        ctx.restore();
+    }
 }
 
 gameLoop(); 
