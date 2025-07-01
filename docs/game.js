@@ -101,21 +101,21 @@ let player = {
     y: Math.floor(ROWS/2),
     dir: "up",
     speed: 1,
-    lives: 300,
+    lives: 10,
     shield: 0,
     speedBonus: 0,
     canShoot: true,
     shootCooldown: 0,
     moveCooldown: 0,
     animX: Math.floor(COLS/2),
-    animY: Math.floor(ROWS/2),
+    animY: Math.floor(COLS/2),
     targetX: Math.floor(COLS/2),
-    targetY: Math.floor(ROWS/2),
+    targetY: Math.floor(COLS/2),
     isMoving: false
 };
 
 // --- Враги ---
-function spawnEnemies(count, speed, shootFreq) {
+function spawnEnemies(count, speed, shootFreq, smart) {
     let enemies = [];
     let attempts = 0;
     while (enemies.length < count && attempts < 1000) {
@@ -130,7 +130,8 @@ function spawnEnemies(count, speed, shootFreq) {
             speed: speed,
             shootTimer: Math.floor(Math.random() * (shootFreq[1] - shootFreq[0])) + shootFreq[0],
             canShoot: true,
-            moveCooldown: 0
+            moveCooldown: 0,
+            smart: smart || 0
         });
     }
     return enemies;
@@ -180,13 +181,14 @@ function moveBullet(bullet) {
     }
 }
 
+// --- Баланс уровней ---
 const LEVELS = [
-    { enemyCount: 3, enemySpeed: 1, shootFreq: [60, 180] },
-//    { enemyCount: 3, enemySpeed: 1, shootFreq: [50, 150] },
-//    { enemyCount: 4, enemySpeed: 1, shootFreq: [50, 150] },
-//    { enemyCount: 4, enemySpeed: 2, shootFreq: [40, 120] },
-//    { enemyCount: 5, enemySpeed: 2, shootFreq: [30, 100] },
-    { boss: true, bossLives: 100, bossSpeed: 1, shootFreq: [30, 80] }
+    { enemyCount: 3, enemySpeed: 1, shootFreq: [60, 180], smart: 0.1 }, // 1 лвл
+    { enemyCount: 3, enemySpeed: 1.05, shootFreq: [54, 162], smart: 0.2 }, // 2 лвл
+    { enemyCount: 3, enemySpeed: 1.1, shootFreq: [49, 146], smart: 0.3 }, // 3 лвл
+    { enemyCount: 4, enemySpeed: 1.15, shootFreq: [44, 131], smart: 0.4 }, // 4 лвл
+    { enemyCount: 5, enemySpeed: 1.2, shootFreq: [40, 118], smart: 0.5 }, // 5 лвл
+    { boss: true, bossLives: 100, bossSpeed: 1, shootFreq: [30, 80] } // 6 лвл
 ];
 let currentLevel = 0;
 
@@ -201,7 +203,7 @@ let bossShootTimer = 0;
 let bonusTimer = Date.now();
 let bonusInterval = 10000;
 let bonusDuration = 6000;
-let gameState = "play"; // play, win, lose
+let gameState = "play"; // play, win, lose, pause, nextlevel
 
 // Таймеры бонусов
 let shieldTimer = 0;
@@ -248,7 +250,8 @@ function startLevel() {
         enemies = [];
     } else {
         maze = generateMaze();
-        enemies = spawnEnemies(LEVELS[currentLevel].enemyCount, LEVELS[currentLevel].enemySpeed, LEVELS[currentLevel].shootFreq);
+        let lvl = LEVELS[currentLevel];
+        enemies = spawnEnemies(lvl.enemyCount, lvl.enemySpeed, lvl.shootFreq, lvl.smart);
     }
     // Найти безопасное место для игрока
     let safeX = Math.floor(COLS/2), safeY = Math.floor(ROWS/2);
@@ -306,7 +309,7 @@ window.addEventListener('keyup', e => {
 function canMoveTo(x, y, fromX = player.x, fromY = player.y) {
     if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
     if (maze[y][x] === 1) return false;
-    if (Array.isArray(enemies) && enemies.some(e => e.x === x && e.y === y)) return false;
+    if (Array.isArray(enemies) && enemies.some(e => (e.x === x && e.y === y) || (e.targetX === x && e.targetY === y))) return false;
     if (boss && boss.x !== undefined && x >= boss.x && x < boss.x+3 && y >= boss.y && y < boss.y+3) return false;
     if (bossMinions && bossMinions.some(m => m.x === x && m.y === y)) return false;
     if (Math.abs(x - fromX) === 1 && Math.abs(y - fromY) === 1) {
@@ -322,11 +325,12 @@ function canMoveTo(x, y, fromX = player.x, fromY = player.y) {
 }
 
 function updatePlayerMove() {
+    let moveFrames = player.speedBonus ? 15 : 30;
     if (player.isMoving) {
         moveFrame++;
-        player.animX += (player.targetX - player.animX) / (MOVE_FRAMES - moveFrame + 1);
-        player.animY += (player.targetY - player.animY) / (MOVE_FRAMES - moveFrame + 1);
-        if (moveFrame >= MOVE_FRAMES) {
+        player.animX += (player.targetX - player.animX) / (moveFrames - moveFrame + 1);
+        player.animY += (player.targetY - player.animY) / (moveFrames - moveFrame + 1);
+        if (moveFrame >= moveFrames) {
             player.animX = player.targetX;
             player.animY = player.targetY;
             player.x = player.targetX;
@@ -384,7 +388,7 @@ function smartEnemyDir(enemy, smartChance) {
 
 // --- Игровой цикл ---
 function gameLoop() {
-    console.log('gameLoop called, gameState:', gameState);
+    console.log('gameState:', gameState);
     console.log('player:', player);
     console.log('boss:', boss);
     // Центрирование canvas (на случай ресайза)
@@ -491,7 +495,7 @@ function gameLoop() {
                         enemySmartChance = Math.min(BASE_ENEMY_SMART_CHANCE + 0.1 * currentLevel, 0.7);
                         enemyShootInterval = Math.max(Math.round(BASE_ENEMY_SHOOT_INTERVAL / levelFactor), 2);
                     }
-                    let dir = smartEnemyDir(enemy, enemySmartChance);
+                    let dir = smartEnemyDir(enemy, enemy.smart);
                     if (dir) {
                         enemy.dir = dir;
                         let ex = enemy.x, ey = enemy.y;
@@ -576,6 +580,14 @@ function gameLoop() {
                         if (player.lives <= 0) gameState = "lose";
                     }
                 }
+            } else if (Math.floor(bullet.x) === player.x && Math.floor(bullet.y) === player.y && bullet.alive) {
+                if (player.shield > 0) {
+                    bullet.alive = false;
+                } else {
+                    player.lives--;
+                    bullet.alive = false;
+                    if (player.lives <= 0) gameState = "lose";
+                }
             }
         }
         // Проверка столкновения с врагами/боссом
@@ -604,7 +616,7 @@ function gameLoop() {
         }
         bonuses = bonuses.filter(b => (Date.now() - b.createdAt) < 12000 && b.timer > 0);
         // Победа/переход на уровень
-        if (!boss && enemies.length === 0 && currentLevel < LEVELS.length-1) {
+        if (!boss && enemies.length === 0 && currentLevel < LEVELS.length-1 && gameState === "play") {
             currentLevel++;
             startLevel();
         }
@@ -721,6 +733,10 @@ function gameLoop() {
         ctx.fillStyle = "#000";
         ctx.font = "bold 24px Arial";
         ctx.fillText(boss.lives, (boss.x+1)*TILE_SIZE + offsetX + 5, (boss.y)*TILE_SIZE + offsetY + 30);
+        // Фаза босса
+        ctx.fillStyle = "#fff";
+        ctx.font = "22px Arial";
+        ctx.fillText("Фаза босса: " + bossPhase, 40, 70);
     }
     // Миньоны босса
     for (let minion of bossMinions) {
@@ -765,9 +781,13 @@ function gameLoop() {
     if (player.shield) ctx.fillText("Щит!", 10 + offsetX, 60 + offsetY);
     if (player.speedBonus) ctx.fillText("Скорость!", 10 + offsetX, 80 + offsetY);
     if (gameState === "win") {
-        ctx.fillStyle = "#0f0";
-        ctx.font = "bold 48px sans-serif";
-        ctx.fillText("Победа!", WIDTH/2-100 + offsetX, HEIGHT/2 + offsetY);
+        ctx.fillStyle = "rgba(30,30,30,0.8)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 64px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("ПОБЕДА!", WIDTH/2, HEIGHT/2);
+        ctx.textAlign = "left";
     }
     if (gameState === "lose") {
         ctx.fillStyle = "#f00";
@@ -775,9 +795,6 @@ function gameLoop() {
         ctx.fillText("Поражение!", WIDTH/2-120 + offsetX, HEIGHT/2 + offsetY);
     }
     // UI: фаза босса и неуязвимость
-    ctx.fillStyle = "#fff";
-    ctx.font = "22px Arial";
-    ctx.fillText("Фаза босса: " + bossPhase, 40, 70);
     if (bossInvulnerable) {
         ctx.fillStyle = "#ff0";
         ctx.font = "bold 22px Arial";
@@ -837,6 +854,13 @@ function updateMinions() {
     }
     bossMinions = bossMinions.filter(m => m.alive);
     if (bossMinions.length === 0) bossInvulnerable = false;
+}
+
+// Бонус скорости +100%
+if (player.speedBonus) {
+    MOVE_FRAMES = 15; // В 2 раза быстрее (если обычное значение 30)
+} else {
+    MOVE_FRAMES = 30;
 }
 
 gameLoop(); 
