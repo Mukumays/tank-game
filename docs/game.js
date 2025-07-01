@@ -780,8 +780,6 @@ function gameLoop() {
     ctx.fillText("Level: " + (currentLevel+1), 10 + offsetX, 70 + offsetY);
     if (player.shield) ctx.fillText("Shield!", 10 + offsetX, 60 + offsetY);
     if (player.speedBonus) ctx.fillText("Speed!", 10 + offsetX, 80 + offsetY);
-    // --- Жизни в виде сердечек ---
-    drawHearts(ctx, 10 + offsetX, 30 + offsetY, Math.max(0, player.lives));
     // Полоска здоровья босса
     if (boss) {
         let barWidth = 400;
@@ -896,23 +894,6 @@ if (player.speedBonus) {
     MOVE_FRAMES = 15; // В 2 раза быстрее (если обычное значение 30)
 } else {
     MOVE_FRAMES = 30;
-}
-
-// --- Жизни в виде сердечек ---
-function drawHearts(ctx, x, y, count) {
-    for (let i = 0; i < count; i++) {
-        ctx.save();
-        ctx.translate(x + i*32, y);
-        ctx.scale(1.2, 1.2);
-        ctx.beginPath();
-        ctx.moveTo(8, 15);
-        ctx.bezierCurveTo(8, 12, 0, 8, 8, 4);
-        ctx.bezierCurveTo(16, 8, 8, 12, 8, 15);
-        ctx.closePath();
-        ctx.fillStyle = '#ff4d6d';
-        ctx.fill();
-        ctx.restore();
-    }
 }
 
 gameLoop(); 
