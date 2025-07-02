@@ -362,9 +362,9 @@ function setupMobileJoystick() {
         let dx = touch.clientX - centerX;
         let dy = touch.clientY - centerY;
         let dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist > 40) {
-            dx = dx * 40 / dist;
-            dy = dy * 40 / dist;
+        if (dist > 120) {
+            dx = dx * 120 / dist;
+            dy = dy * 120 / dist;
         }
         knob.style.left = (60 + dx) + 'px';
         knob.style.top = (60 + dy) + 'px';
@@ -394,9 +394,9 @@ function setupMobileJoystick() {
         let dx = e.clientX - centerX;
         let dy = e.clientY - centerY;
         let dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist > 40) {
-            dx = dx * 40 / dist;
-            dy = dy * 40 / dist;
+        if (dist > 120) {
+            dx = dx * 120 / dist;
+            dy = dy * 120 / dist;
         }
         knob.style.left = (60 + dx) + 'px';
         knob.style.top = (60 + dy) + 'px';
