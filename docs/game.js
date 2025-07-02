@@ -342,8 +342,8 @@ function setupMobileJoystick() {
         if (dir.includes('right')) keys.right = true;
     }
     function resetJoystick() {
-        knob.style.left = '30px';
-        knob.style.top = '30px';
+        knob.style.left = '60px';
+        knob.style.top = '60px';
         setKeys(null);
     }
     joystick.addEventListener('touchstart', function(e) {
@@ -366,8 +366,8 @@ function setupMobileJoystick() {
             dx = dx * 40 / dist;
             dy = dy * 40 / dist;
         }
-        knob.style.left = (30 + dx) + 'px';
-        knob.style.top = (30 + dy) + 'px';
+        knob.style.left = (60 + dx) + 'px';
+        knob.style.top = (60 + dy) + 'px';
         moveDir = getDir(dx, dy);
         setKeys(moveDir);
     });
@@ -398,8 +398,8 @@ function setupMobileJoystick() {
             dx = dx * 40 / dist;
             dy = dy * 40 / dist;
         }
-        knob.style.left = (30 + dx) + 'px';
-        knob.style.top = (30 + dy) + 'px';
+        knob.style.left = (60 + dx) + 'px';
+        knob.style.top = (60 + dy) + 'px';
         moveDir = getDir(dx, dy);
         setKeys(moveDir);
     });
