@@ -283,6 +283,8 @@ function startLevel() {
 
 startLevel();
 
+let keys = {left: false, right: false, up: false, down: false};
+
 // --- Новый виртуальный джойстик и кнопка стрельбы ---
 function setupMobileJoystick() {
     const joystick = document.getElementById('joystick');
