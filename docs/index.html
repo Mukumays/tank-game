@@ -143,7 +143,10 @@
         #fire-btn:active {
           background: #ff7675;
         }
-        @media (min-width: 801px) {
+        @media (pointer: coarse) {
+          #mobile-joystick-container { display: block !important; }
+        }
+        @media (pointer: fine) {
           #mobile-joystick-container { display: none !important; }
         }
     </style>
