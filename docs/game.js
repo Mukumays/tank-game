@@ -509,6 +509,10 @@ function smartEnemyDir(enemy, smartChance) {
     return ["up","down","left","right"][Math.floor(Math.random()*4)];
 }
 
+// --- Сообщения о бонусах ---
+let bonusMessage = '';
+let bonusMessageTimer = 0;
+
 // --- Игровой цикл ---
 function gameLoop() {
     console.log('gameState:', gameState);
@@ -731,9 +735,17 @@ function gameLoop() {
         }
         for (let bonus of bonuses) {
             if (bonus.x === player.x && bonus.y === player.y) {
-                if (bonus.type === "life") player.lives++;
-                if (bonus.type === "shield") { player.shield = 1; shieldTimer = 600; }
-                if (bonus.type === "speed") { player.speedBonus = 1; speedTimer = 600; }
+                if (bonus.type === "life") {
+                    player.lives++;
+                    bonusMessage = "+1 Life!";
+                    bonusMessageTimer = 90;
+                }
+                if (bonus.type === "shield") {
+                    player.shield = 1; shieldTimer = 420;
+                }
+                if (bonus.type === "speed") {
+                    player.speedBonus = 1; speedTimer = 420;
+                }
                 bonus.timer = 0;
             }
         }
@@ -853,10 +865,23 @@ function gameLoop() {
     if (boss) {
         ctx.fillStyle = BOSS_PHASE_COLORS[bossPhase-1];
         ctx.fillRect((boss.x)*TILE_SIZE + offsetX, (boss.y)*TILE_SIZE + offsetY, TILE_SIZE*3, TILE_SIZE*3);
+        // Дуло
+        ctx.save();
+        let bx = (boss.x+1)*TILE_SIZE + offsetX + TILE_SIZE/2;
+        let by = (boss.y+1)*TILE_SIZE + offsetY + TILE_SIZE/2;
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        if (boss.dir === "up") ctx.lineTo(bx, by - TILE_SIZE*1.2);
+        if (boss.dir === "down") ctx.lineTo(bx, by + TILE_SIZE*1.2);
+        if (boss.dir === "left") ctx.lineTo(bx - TILE_SIZE*1.2, by);
+        if (boss.dir === "right") ctx.lineTo(bx + TILE_SIZE*1.2, by);
+        ctx.stroke();
+        ctx.restore();
         ctx.fillStyle = "#000";
         ctx.font = "bold 24px Arial";
         ctx.fillText(boss.lives, (boss.x+1)*TILE_SIZE + offsetX + 5, (boss.y)*TILE_SIZE + offsetY + 30);
-        // Фаза босса
         ctx.fillStyle = "#fff";
         ctx.font = "22px Arial";
         ctx.fillText("Boss phase: " + bossPhase, 40, 70);
@@ -899,16 +924,26 @@ function gameLoop() {
     // UI
     ctx.fillStyle = "#fff";
     ctx.font = "22px Arial";
-    ctx.fillText("Lives: " + player.lives, 10 + offsetX, 40 + offsetY);
-    ctx.fillText("Level: " + (currentLevel+1), 10 + offsetX, 70 + offsetY);
-    if (player.shield) ctx.fillText("Shield!", 10 + offsetX, 60 + offsetY);
-    if (player.speedBonus) ctx.fillText("Speed!", 10 + offsetX, 80 + offsetY);
-    // Полоска здоровья босса
+    let uiY = 40 + offsetY;
+    ctx.fillText("Lives: " + player.lives, 10 + offsetX, uiY);
+    uiY += 30;
+    ctx.fillText("Level: " + (currentLevel+1), 10 + offsetX, uiY);
+    // --- Полоска HP босса и надписи ---
     if (boss) {
+        // Надпись BOSS
+        ctx.save();
+        ctx.font = "bold 36px Arial";
+        ctx.fillStyle = "#ff4d6d";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#000";
+        ctx.shadowBlur = 10;
+        ctx.fillText("BOSS", WIDTH/2, offsetY + 38);
+        ctx.restore();
+        // Полоска HP
         let barWidth = 400;
         let barHeight = 24;
         let barX = WIDTH/2 - barWidth/2;
-        let barY = offsetY - 40;
+        let barY = offsetY + 50;
         ctx.save();
         ctx.fillStyle = '#333';
         ctx.fillRect(barX, barY, barWidth, barHeight);
@@ -922,8 +957,53 @@ function gameLoop() {
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.fillText('Boss HP', barX + barWidth/2, barY + barHeight - 6);
-        ctx.textAlign = 'left';
         ctx.restore();
+        // Фаза босса
+        ctx.save();
+        ctx.font = "bold 24px Arial";
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#000";
+        ctx.shadowBlur = 8;
+        ctx.fillText("Boss phase: " + bossPhase, WIDTH/2, barY + barHeight + 32);
+        ctx.restore();
+    }
+    // --- Сообщения о бонусах по центру ---
+    let centerMsgY = offsetY + 120 + (boss ? 60 : 0);
+    if (player.shield) {
+        ctx.save();
+        ctx.font = "bold 32px Arial";
+        ctx.fillStyle = "#0cf";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#000";
+        ctx.shadowBlur = 8;
+        ctx.fillText("Shield!", WIDTH/2, centerMsgY);
+        ctx.restore();
+        centerMsgY += 40;
+    }
+    if (player.speedBonus) {
+        ctx.save();
+        ctx.font = "bold 32px Arial";
+        ctx.fillStyle = "#fa0";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#000";
+        ctx.shadowBlur = 8;
+        ctx.fillText("Speed!", WIDTH/2, centerMsgY);
+        ctx.restore();
+        centerMsgY += 40;
+    }
+    // --- Сообщение о жизни ---
+    if (bonusMessage && bonusMessageTimer > 0) {
+        ctx.save();
+        ctx.font = "bold 32px Arial";
+        ctx.fillStyle = "#0cf";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#000";
+        ctx.shadowBlur = 8;
+        ctx.fillText(bonusMessage, WIDTH/2, centerMsgY);
+        ctx.restore();
+        bonusMessageTimer--;
+        if (bonusMessageTimer <= 0) bonusMessage = '';
     }
     if (gameState === "win" || gameState === "lose") {
         showGameOverButtons();
