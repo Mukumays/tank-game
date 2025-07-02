@@ -283,58 +283,125 @@ function startLevel() {
 
 startLevel();
 
-// --- Управление (плавное) ---
-let keys = {left: false, right: false, up: false, down: false};
-window.addEventListener('keydown', e => {
-    if (gameState !== "play") return;
-    const key = e.key.toLowerCase();
-    if (key === "arrowleft" || key === "a") keys.left = true;
-    if (key === "arrowright" || key === "d") keys.right = true;
-    if (key === "arrowup" || key === "w") keys.up = true;
-    if (key === "arrowdown" || key === "s") keys.down = true;
-    if (e.key === " ") {
+// --- Новый виртуальный джойстик и кнопка стрельбы ---
+function setupMobileJoystick() {
+    const joystick = document.getElementById('joystick');
+    const knob = document.getElementById('joystick-knob');
+    const fireBtn = document.getElementById('fire-btn');
+    if (!joystick || !knob || !fireBtn) return;
+    let dragging = false;
+    let startX = 0, startY = 0;
+    let centerX = 0, centerY = 0;
+    let moveDir = null;
+    function getDir(dx, dy) {
+        const angle = Math.atan2(dy, dx);
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 20) return null;
+        if (angle >= -Math.PI/8 && angle < Math.PI/8) return 'right';
+        if (angle >= Math.PI/8 && angle < 3*Math.PI/8) return 'downright';
+        if (angle >= 3*Math.PI/8 && angle < 5*Math.PI/8) return 'down';
+        if (angle >= 5*Math.PI/8 && angle < 7*Math.PI/8) return 'downleft';
+        if (angle >= 7*Math.PI/8 || angle < -7*Math.PI/8) return 'left';
+        if (angle >= -7*Math.PI/8 && angle < -5*Math.PI/8) return 'upleft';
+        if (angle >= -5*Math.PI/8 && angle < -3*Math.PI/8) return 'up';
+        if (angle >= -3*Math.PI/8 && angle < -Math.PI/8) return 'upright';
+        return null;
+    }
+    function setKeys(dir) {
+        keys.up = keys.down = keys.left = keys.right = false;
+        if (!dir) return;
+        if (dir.includes('up')) keys.up = true;
+        if (dir.includes('down')) keys.down = true;
+        if (dir.includes('left')) keys.left = true;
+        if (dir.includes('right')) keys.right = true;
+    }
+    function resetJoystick() {
+        knob.style.left = '30px';
+        knob.style.top = '30px';
+        setKeys(null);
+    }
+    joystick.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        dragging = true;
+        const rect = joystick.getBoundingClientRect();
+        centerX = rect.left + rect.width/2;
+        centerY = rect.top + rect.height/2;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+    });
+    joystick.addEventListener('touchmove', function(e) {
+        if (!dragging) return;
+        const touch = e.touches[0];
+        let dx = touch.clientX - centerX;
+        let dy = touch.clientY - centerY;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist > 40) {
+            dx = dx * 40 / dist;
+            dy = dy * 40 / dist;
+        }
+        knob.style.left = (30 + dx) + 'px';
+        knob.style.top = (30 + dy) + 'px';
+        moveDir = getDir(dx, dy);
+        setKeys(moveDir);
+    });
+    joystick.addEventListener('touchend', function(e) {
+        dragging = false;
+        resetJoystick();
+    });
+    joystick.addEventListener('touchcancel', function(e) {
+        dragging = false;
+        resetJoystick();
+    });
+    // Для мыши (эмуляция на ПК)
+    joystick.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        dragging = true;
+        const rect = joystick.getBoundingClientRect();
+        centerX = rect.left + rect.width/2;
+        centerY = rect.top + rect.height/2;
+        startX = e.clientX;
+        startY = e.clientY;
+    });
+    window.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        let dx = e.clientX - centerX;
+        let dy = e.clientY - centerY;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist > 40) {
+            dx = dx * 40 / dist;
+            dy = dy * 40 / dist;
+        }
+        knob.style.left = (30 + dx) + 'px';
+        knob.style.top = (30 + dy) + 'px';
+        moveDir = getDir(dx, dy);
+        setKeys(moveDir);
+    });
+    window.addEventListener('mouseup', function(e) {
+        if (dragging) {
+            dragging = false;
+            resetJoystick();
+        }
+    });
+    // Кнопка стрельбы
+    function fire() {
+        if (gameState !== "play") return;
         if (player.canShoot) {
             bullets.push(createBullet(player.x, player.y, player.dir, "player"));
             player.canShoot = false;
             player.shootCooldown = 10 - (player.speedBonus ? 5 : 0);
         }
     }
-});
-window.addEventListener('keyup', e => {
-    const key = e.key.toLowerCase();
-    if (key === "arrowleft" || key === "a") keys.left = false;
-    if (key === "arrowright" || key === "d") keys.right = false;
-    if (key === "arrowup" || key === "w") keys.up = false;
-    if (key === "arrowdown" || key === "s") keys.down = false;
-});
-
-function setupTouchControls() {
-    const btnUp = document.getElementById('btn-up');
-    const btnDown = document.getElementById('btn-down');
-    const btnLeft = document.getElementById('btn-left');
-    const btnRight = document.getElementById('btn-right');
-    const btnFire = document.getElementById('btn-fire');
-    if (!btnUp) return; // если кнопок нет, ничего не делаем
-    btnUp.addEventListener('touchstart', e => { e.preventDefault(); keys.up = true; });
-    btnUp.addEventListener('touchend', e => { e.preventDefault(); keys.up = false; });
-    btnDown.addEventListener('touchstart', e => { e.preventDefault(); keys.down = true; });
-    btnDown.addEventListener('touchend', e => { e.preventDefault(); keys.down = false; });
-    btnLeft.addEventListener('touchstart', e => { e.preventDefault(); keys.left = true; });
-    btnLeft.addEventListener('touchend', e => { e.preventDefault(); keys.left = false; });
-    btnRight.addEventListener('touchstart', e => { e.preventDefault(); keys.right = true; });
-    btnRight.addEventListener('touchend', e => { e.preventDefault(); keys.right = false; });
-    if (btnFire) {
-        btnFire.addEventListener('touchstart', e => {
-            e.preventDefault();
-            if (player.canShoot) {
-                bullets.push(createBullet(player.x, player.y, player.dir, "player"));
-                player.canShoot = false;
-                player.shootCooldown = 10 - (player.speedBonus ? 5 : 0);
-            }
-        });
-    }
+    fireBtn.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        fire();
+    });
+    fireBtn.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        fire();
+    });
 }
-setupTouchControls();
+setupMobileJoystick();
 
 function canMoveTo(x, y, fromX = player.x, fromY = player.y) {
     if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
