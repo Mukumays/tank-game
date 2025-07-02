@@ -285,6 +285,30 @@ startLevel();
 
 let keys = {left: false, right: false, up: false, down: false};
 
+// --- Управление с клавиатуры (стрелки и WASD) ---
+window.addEventListener('keydown', e => {
+    if (gameState !== "play") return;
+    const key = e.key.toLowerCase();
+    if (key === "arrowleft" || key === "a") keys.left = true;
+    if (key === "arrowright" || key === "d") keys.right = true;
+    if (key === "arrowup" || key === "w") keys.up = true;
+    if (key === "arrowdown" || key === "s") keys.down = true;
+    if (e.key === " ") {
+        if (player.canShoot) {
+            bullets.push(createBullet(player.x, player.y, player.dir, "player"));
+            player.canShoot = false;
+            player.shootCooldown = 10 - (player.speedBonus ? 5 : 0);
+        }
+    }
+});
+window.addEventListener('keyup', e => {
+    const key = e.key.toLowerCase();
+    if (key === "arrowleft" || key === "a") keys.left = false;
+    if (key === "arrowright" || key === "d") keys.right = false;
+    if (key === "arrowup" || key === "w") keys.up = false;
+    if (key === "arrowdown" || key === "s") keys.down = false;
+});
+
 // --- Новый виртуальный джойстик и кнопка стрельбы ---
 function setupMobileJoystick() {
     const joystick = document.getElementById('joystick');
