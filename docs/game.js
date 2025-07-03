@@ -220,7 +220,7 @@ const BASE_ENEMY_COUNT = 3;
 const BASE_ENEMY_SHOOT_INTERVAL = 100;
 
 // --- Цвета фаз босса ---
-const BOSS_PHASE_COLORS = ["#ff0", "#f00", "#800000"];
+const BOSS_PHASE_COLORS = ["#ff6d00", "#b71c1c", "#4a001f"];
 let bossPhase = 1;
 let bossMinions = [];
 let bossInvulnerable = false;
