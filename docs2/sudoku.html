@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Судоку — Мини-игра</title>
+    <style>
+        body {
+            background: #f8fafd;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        #sudoku-board {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            grid-template-rows: repeat(9, 40px);
+            gap: 0;
+            margin-top: 40px;
+            background: #e0f7fa;
+            border: 6px solid #00bcd4;
+            box-shadow: 0 0 20px #00bcd422;
+            position: relative;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            color: #222;
+            font-size: 1.5em;
+            text-align: center;
+            line-height: 40px;
+            border: 1px solid #00bcd4;
+            outline: none;
+            transition: background 0.2s, border 0.2s;
+            box-sizing: border-box;
+        }
+        .cell:focus, .cell.selected {
+            background: #b2ebf2;
+            border: 2px solid #0097a7;
+        }
+        .cell.prefilled {
+            background: #fff;
+            color: #0097a7;
+            font-weight: bold;
+        }
+        .cell.error {
+            background: #ffe0e0;
+            color: #d32f2f;
+            border: 2px solid #d32f2f;
+        }
+        /* Жирные границы для блоков 3x3 */
+        .cell.block-top { border-top: 4px solid #00bcd4; }
+        .cell.block-left { border-left: 4px solid #00bcd4; }
+        .cell.block-right { border-right: 4px solid #00bcd4; }
+        .cell.block-bottom { border-bottom: 4px solid #00bcd4; }
+        #sudoku-ui {
+            margin-top: 20px;
+            color: #222;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        #sudoku-ui button {
+            margin: 0 10px;
+            padding: 10px 24px;
+            font-size: 1em;
+            border-radius: 8px;
+            border: none;
+            background: #00bcd4;
+            color: #fff;
+            cursor: pointer;
+        }
+        #sudoku-ui button:active {
+            background: #0097a7;
+        }
+        .cell.highlight-num {
+            background: #b2ebf2 !important;
+            color: #00796b !important;
+        }
+        .cell.highlight-row {
+            background: #e0f7fa !important;
+        }
+        .cell.highlight-col {
+            background: #e0f7fa !important;
+        }
+        .cell.highlight-block {
+            background: #b2ebf2 !important;
+        }
+        .cell.highlight-bold {
+            font-weight: bold !important;
+            color: #00796b !important;
+            background: #b2ebf2 !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="sudoku-difficulty" style="margin-bottom: 18px; text-align: center;">
+      <label for="difficulty" style="font-size: 1.25em; color: #0097a7; font-weight: bold; margin-right: 10px;">Difficulty:</label>
+      <select id="difficulty" style="font-size: 1.15em; color: #0097a7; background: #e0f7fa; border: 2px solid #00bcd4; border-radius: 8px; padding: 6px 18px; font-family: inherit; font-weight: bold; outline: none;">
+        <option value="36">Easy</option>
+        <option value="44" selected>Medium</option>
+        <option value="52">Hard</option>
+      </select>
+    </div>
+    <div style="position: relative; display: inline-block;">
+      <div id="sudoku-board"></div>
+      <div id="win-overlay" style="display:none; position:absolute; left:0; top:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:10; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+        <span style="font-size:3em; color:#00bcd4; font-weight:bold; text-shadow:0 2px 12px #00bcd488;">WIN!</span>
+      </div>
+    </div>
+    <div id="sudoku-numpad" style="margin-top:18px; display:flex; justify-content:center; gap:8px;"></div>
+    <div id="sudoku-ui" style="display: flex; flex-direction: column; align-items: center; margin-top: 20px;">
+        <div style="display: flex; gap: 16px; margin-bottom: 10px;">
+            <button id="new-btn">New Game</button>
+            <button id="hint-btn" style="position: relative; display: flex; align-items: center; gap: 8px; background: #fffde7; color: #ffb300; border: 2px solid #ffb300; font-weight: bold;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;"><circle cx="12" cy="12" r="10" fill="#fffde7"/><path d="M9 18h6m-3 0v2m-4-2a4 4 0 018 0c0 1.1-.9 2-2 2H9a2 2 0 01-2-2zm7-7a3 3 0 10-6 0c0 1.31.84 2.42 2 2.83V15a1 1 0 002 0v-1.17A2.99 2.99 0 0017 11z" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Hint
+                <span id="hint-sup" style="position: absolute; top: 2px; right: 8px; font-size: 1em; color: #ffb300; font-weight: bold; pointer-events: none;">3</span>
+            </button>
+        </div>
+        <span id="sudoku-message"></span>
+    </div>
+    <script src="sudoku.js"></script>
+</body>
+</html> 
